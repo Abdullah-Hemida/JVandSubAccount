@@ -1,0 +1,37 @@
+﻿{
+  "title": "Journal Vouchers",
+  "newButton": "New Voucher",
+  "columns": {
+    "voucherNo": "Voucher No",
+    "date": "Date",
+    "type": "Type",
+    "totalDebit": "Total Debit",
+    "totalCredit": "Total Credit",
+    "actions": "Actions"
+  },
+  "form": {
+    "titleNew": "New Voucher",
+    "titleEdit": "Edit Voucher",
+    "fields": {
+      "voucherNo": "Voucher No",
+      "date": "Date",
+      "transType": "Trans. Type",
+      "receiptNo": "Receipt No",
+      "notes": "Notes"
+    },
+    "details": {
+      "title": "Voucher Details",
+      "account": "Account",
+      "subAccount": "SubAccount",
+      "debit": "Debit",
+      "credit": "Credit",
+      "documented": "documented",
+      "totals": "Totals",
+      "totalDebit": "Total Debit",
+      "totalCredit": "Total Credit",
+      "difference": "Difference",
+      "emptyState": "No records found"
+    }
+  }
+}
+

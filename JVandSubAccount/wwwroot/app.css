@@ -1,0 +1,337 @@
+﻿
+:root {
+    --primary-blue: #0C5BAA;
+    --golden-yellow: #FFEEA3;
+    --light-bg: #eff8ff;
+    --input-bg: #e8ecef;
+    --blue-color: #0C5BAA;
+}
+
+html, body, #app {
+    height: 100vh;
+    margin: 0;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    overflow: hidden;
+    font-size: 14px;
+    font-weight:bold;
+}
+
+.rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.ltr {
+    direction: ltr;
+    text-align: left;
+}
+
+/* Main layout */
+.journal-voucher-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: white;
+}
+
+/* Header styles */
+.top-nav {
+    background-color: var(--primary-blue);
+    padding: 0.5rem 1rem;
+    border-radius: 6px 6px 0 0;
+}
+
+.yellow-color {
+    color: var(--golden-yellow);
+}
+
+/* Base Container */
+.toolbar-container {
+    display: flex;
+    align-items: center;
+    height: 30px;
+    width: 95%;
+    margin: 8px auto;
+    gap: 3px; /* Space between main segments */
+}
+
+/* Toolbar Segments */
+.toolbar-segment {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 4px;
+}
+
+/* Button Spacer */
+.btn-spacer {
+    width: 3px;
+    height: 100%;
+    background-color: white;
+    margin: 0 1px;
+}
+
+/* Blue Background */
+.blue-bg {
+    background-color: #0C5BAA;
+}
+
+.blue-color {
+    color: #0C5BAA;
+}
+/* Rounded Corners */
+.rounded {
+    border-radius: 4px;
+}
+
+/* Buttons */
+.toolbar-btn {
+    color: #FFEEA3;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 0 8px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+    .toolbar-btn:hover {
+        color: white;
+    }
+
+/* Search Field */
+.search-input {
+    border: 1px solid;
+    outline: none;
+    height: 100%;
+    width: 140px;
+    padding: 0 8px;
+    font-size: 12px;
+    border-radius: 4px 0 0 4px;
+}
+
+/* Search Icon */
+.search-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 0 6px;
+    border-radius: 0 4px 4px 0;
+}
+
+/* Icons */
+.bi {
+    color: var(--golden-yellow);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+/* Title */
+.flex-grow-1 {
+    flex-grow: 1;
+    text-align: center;
+    color: var(--golden-yellow);
+    font-weight: bold;
+    justify-content: center;
+}
+
+/* Form controls */
+.JV-plaintext {
+    background-color: var(--input-bg) !important;
+    width: 150px;
+    height: 25px;
+    text-align:center;
+}
+.readonly-display {
+    font-size: 0.85rem;
+    padding: 0.15rem 0.5rem;
+    line-height: 1.4;
+    background-color: transparent !important;
+    border: none;
+}
+
+/* Data table container */
+.data-table-container {
+    flex: 1;
+    overflow-y: auto;
+    width: 95%;
+    margin: 0 auto;
+    margin-bottom: 2px;
+}
+
+/* Data table styles */
+.data-table {
+    border-collapse: separate;
+    border-spacing: 1px;
+    min-height: 200px;
+}
+
+    .data-table thead th {
+        background-color: var(--primary-blue);
+        color: white;
+        font-size: 0.75rem;
+        position: sticky;
+        top: 0;
+    }
+
+    .data-table tbody tr {
+        background-color: var(--light-bg);
+        font-size: 0.75rem;
+    }
+
+    /* Totals row styling */
+    .data-table tfoot.totals-footer td {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        background-color: #f8f9fa;
+        border-top: 2px solid #dee2e6;
+    }
+
+    /* Totals container aligned to left */
+    .data-table tfoot.totals-footer .d-flex {
+        justify-content: flex-start; /* Align left */
+    }
+
+/* Totals span styling */
+.totals-span {
+    display: inline-block;
+    background-color: #e9ecef;
+    border-radius: 0.25rem;
+    padding: 0.15rem 1rem;
+    min-width: 180px; /* Increased width */
+    text-align: center;
+    font-weight: bold;
+}
+
+
+/* SubAccounts Container */
+.SubAccounts-container {
+    margin: 0 35px;
+    font-size: 12px;
+}
+/* Disabled state */
+.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+/* Tree View */
+.tree-view {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.tree-list, .sub-tree {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+    .tree-list .list-group-item {
+        border-left: none;
+        border-right: none;
+        border-radius: 0;
+    }
+
+.tree-node {
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+}
+
+.selected-node {
+    background-color: #e9f7fe !important;
+    font-weight: bold;
+}
+
+.tree-node-text {
+    font-size: 12px !important;
+    font-weight: bold !important;
+    color: black !important;
+    text-decoration: none !important;
+    text-align: start;
+    flex-grow: 1;
+    min-width: 0; /* NEW: Fix truncation */
+}
+
+.tree-node-text:hover {
+    color: #333 !important;
+    text-decoration: none !important;
+}
+
+/* Fix for long text in tree nodes */
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Form Elements */
+.form-control-plaintext {
+    width: 400px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e9ecef;
+    font-weight:bold;
+}
+
+.rtl .form-control-plaintext {
+    text-align: right;
+}
+
+.col-form-label {
+    color: #0C5BAA;
+    font-weight:bold;
+}
+
+
+/* Icons */
+.bi {
+    transition: transform 0.3s ease;
+}
+
+/* Tabs */
+.nav-tabs .nav-link {
+    color: white;
+    border: none;
+    padding: 6px;
+    font-size: 8px;
+    cursor: pointer;
+}
+
+    .nav-tabs .nav-link.active {
+        color: #0d6efd;
+        background-color: white;
+        border:none;
+        border-radius: 4px 4px 0 0;
+    }
+.nav-tabs {
+  background-color: var(--blue-color);
+  border:none;
+}
+
+.Tabs-container {
+    border: 2px solid var(--blue-color) !important;
+    min-height:320px !important;
+}
+card-header {
+    border: none !important;
+}
+
+.card-body{
+    padding: 10px;
+}
+.client-details-tab {
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e9ecef !important;
+    font-weight: bold;
+}

@@ -1,0 +1,20 @@
+﻿@inject LocalizationService Localizer
+@inject NavigationManager Navigation
+
+<div class="error-page">
+    <div class="error-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h1>@Localizer["error:title"]</h1>
+    <p>@Localizer["error:message"]</p>
+    <button class="btn btn-primary" @onclick="NavigateToHome">
+        @Localizer["error:goHome"]
+    </button>
+</div>
+
+@code {
+    private void NavigateToHome()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

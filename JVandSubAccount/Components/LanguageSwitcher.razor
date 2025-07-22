@@ -1,0 +1,22 @@
+﻿@inject IJSRuntime JsRuntime
+@inject NavigationManager Nav
+
+<select @onchange="OnChangeLanguage"
+        class="form-select form-select-sm"
+        style="width: 90px; height: 24px; font-size: 10px;"
+        value="@CurrentCulture">
+    <option value="en">English</option>
+    <option value="ar">العربية</option>
+</select>
+
+@code {
+    private string CurrentCulture = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+
+    private async Task OnChangeLanguage(ChangeEventArgs e)
+    {
+        var selectedCulture = e.Value?.ToString() ?? "en";
+        await JsRuntime.InvokeVoidAsync("localStorage.setItem", "culture", selectedCulture);
+        Nav.NavigateTo(Nav.Uri, forceLoad: true); // reload to apply culture
+    }
+}
+

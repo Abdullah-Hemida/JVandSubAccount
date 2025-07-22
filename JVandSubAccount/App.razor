@@ -1,0 +1,17 @@
+﻿@inject LocalizationService Localizer
+
+<Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="new[] { typeof(Program).Assembly }">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <div class="main">
+                <div class="content px-4">
+                    <h1>@Localizer["common:notFound"]</h1>
+                    <p>@Localizer["common:pageNotFound"]</p>
+                </div>
+            </div>
+        </LayoutView>
+    </NotFound>
+</Router>

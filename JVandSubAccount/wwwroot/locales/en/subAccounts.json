@@ -1,0 +1,28 @@
+﻿{
+  "pageTitle": "Sub Accounts",
+  "treeTitle": "Sub-Accounts Tree",
+  "detailsTitle": "Sub-Account Details",
+  "selectAccountPrompt": "Please select a sub-account from the tree",
+  "noAccounts": "No sub-accounts available",
+  "noAccountsData": "No linked accounts",
+  "noClientData": "No client data available",
+  "code": "Code",
+  "nameAr": "Arabic Name",
+  "nameEn": "English Name",
+  "branch": "Branch",
+  "type": "Type",
+  "level": "Level",
+  "tabs": {
+    "accounts": "Accounts",
+    "details": "Client Details"
+  },
+  "accountNumber": "Account Number",
+  "accountNameAr": "Account Name (Arabic)",
+  "accountNameEn": "Account Name (English)",
+  "clientNo": "Client Number",
+  "birthDate": "Birth Date",
+  "city": "City",
+  "creditLimit": "Credit Limit",
+  "notes": "Notes",
+  "IsDiscountTax": "Discount Tax"
+}

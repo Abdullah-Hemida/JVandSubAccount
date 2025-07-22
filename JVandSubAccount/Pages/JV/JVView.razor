@@ -1,0 +1,205 @@
+﻿@page "/jv/JVView/{JVID:int}"
+@inherits JVandSubAccount.Shared.LocalizedComponentBase
+@inject IJVService JvServic
+@inject NavigationManager Navigation
+
+@code {
+    [Parameter] public int JVID { get; set; }
+
+    private JournalVoucher? JV;
+    private List<JVDetailViewModel> Details = new();
+    private List<JVType> JVTypes = new();
+
+    private string jv(string key) => Localizer[$"journalVouchers:{key}"];
+    private string Common(string key) => Localizer[$"common:{key}"];
+
+    private string GetAccountName(JVDetailViewModel item)
+    => Localizer.IsRTL ? item.AccountNameAr : item.AccountNameEn;
+
+    private string GetSubAccountName(JVDetailViewModel item)
+        => Localizer.IsRTL ? item.SubAccountNameAr : item.SubAccountNameEn;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Module = "journalVouchers";
+        var culture = CultureInfo.CurrentUICulture.Name;
+
+        // Load required localization modules
+        await Localizer.LoadStringsAsync(culture, "journalVouchers");
+        await Localizer.LoadStringsAsync(culture, "common");
+
+        JV = await JvServic.GetJVByIdAsync(JVID);
+        if (JV is not null)
+        {
+            Details = await JvServic.GetJVDetailsByJVIDAsync(JVID);
+        }
+        JVTypes = await JvServic.GetJVTypesAsync();
+    }
+
+    private void NavigateToJVForm(int? id = null)
+    {
+        if (id.HasValue)
+            Navigation.NavigateTo($"/jv/JVForm/{id.Value}"); // Edit mode
+        else
+            Navigation.NavigateTo("/jv/JVForm"); // New mode
+    }
+}
+
+<div id="app" class="journal-voucher-container @(Localizer.IsRTL ? "rtl" : "ltr")">
+    <!-- Header -->
+    <header class="top-nav">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-list white-burger me-2" style="font-size: 1.2rem; color:white"></i>
+                <LanguageSwitcher />
+            </div>
+            <div class="d-flex align-items-center justify-content-between w-50">
+                <span class="text-white">@Common("titles:welcome") User: <span class="yellow-color">name</span></span>
+                <span class="text-white">فرع الأسكندرية <span class="yellow-color">ss</span></span>
+            </div>
+            <div class="d-flex align-items-center justify-content-between">
+                <a class="yellow-color text-decoration-none" href="#">@Common("titles:logout")</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="toolbar-container">
+        <div class="toolbar-segment blue-bg rounded">
+            <a @onclick="() => NavigateToJVForm(null)" class="toolbar-btn">@Common("buttons:new")</a>
+            <div class="btn-spacer"></div>
+            <a @onclick="() => NavigateToJVForm(JVID)" class="toolbar-btn">@Common("buttons:update")</a>
+            <div class="btn-spacer"></div>
+            <a href="#" class="toolbar-btn">@Common("buttons:delete")</a>
+            <div class="btn-spacer"></div>
+            <a href="#" class="toolbar-btn">@Common("buttons:print")</a>
+        </div>
+
+        <div class="toolbar-segment blue-bg rounded">
+            <i class="bi bi-chevron-left"></i>
+        </div>
+
+        <div class="toolbar-segment rounded">
+            <input type="search" class="search-input" />
+            <div class="search-icon blue-bg">
+                <i class="bi bi-search"></i>
+            </div>
+        </div>
+
+        <div class="toolbar-segment blue-bg rounded">
+            <i class="bi bi-chevron-right"></i>
+        </div>
+
+        <div class="toolbar-segment blue-bg rounded flex-grow-1">
+            @jv("title")
+        </div>
+
+        <div class="toolbar-segment blue-bg rounded yellow-color">
+            X
+        </div>
+    </div>
+
+    <!-- Form Section (Read-Only View) -->
+    <section class=" py-2" style="width: 95%; margin: 0 auto;">
+        <div class="row  align-items-center justify-content-start mb-2">
+
+            <div class="col-3 d-flex justify-content-start">
+                <label class="col-form-label form-label-sm me-4 @(Localizer.IsRTL ? "ms-4" : " ")">@jv("form:fields:date")</label>
+                <div class="col-auto">
+                    <div class="form-control" style="width:150px; background-color:#e8ecef;">@JV?.JVDate.ToString("yyyy-MM-dd")</div>
+                </div>
+            </div>
+
+            <div class="col-3 d-flex justify-content-start">
+                <label class="col-form-label form-label-sm me-4 @(Localizer.IsRTL ? "ms-4" : " ")">@jv("form:fields:transType")</label>
+                <div class="">
+                    <div class="form-control" style="width:150px; background-color:#e8ecef;">
+                    @(JVTypes.FirstOrDefault(t => t.JVTypeID == JV?.JVTypeID) is var type && type != null
+                        ? (Localizer.IsRTL ? type.NameAr : type.NameEn)
+                        : string.Empty)
+                    </div>
+               </div>
+            </div>
+
+            <div class="col-3 d-flex justify-content-start">
+                <label class="col-form-label form-label-sm me-4 @(Localizer.IsRTL ? "ms-4" : " ")">@jv("form:fields:receiptNo")</label>
+                <div class="">
+                    <div class="form-control" style="width:150px; background-color:#e8ecef;">@JV?.ReceiptNo</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row align-items-center mb-2">
+            <div class="col-10 d-flex justify-content-start">
+                <label class="col-form-label form-label-sm me-4 @(Localizer.IsRTL ? "ms-4" : " ")">@jv("form:fields:notes")</label>
+                <div class="form-control" style="width:600px; height:50px; background-color:#e8ecef;">
+                    @JV?.Notes
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Table Section -->
+    <section class="data-table-container datatable">
+        <table class="table data-table">
+            <thead>
+                <tr>
+                    <th width="5%">#</th>
+                    <th width="15%">@jv("form:details:account")</th>
+                    <th width="15%">@jv("form:details:subAccount")</th>
+                    <th width="15%">@jv("form:details:debit")</th>
+                    <th width="15%">@jv("form:details:credit")</th>
+                    <th width="15%">@jv("form:details:documented")</th>
+                    <th width="20%">@jv("form:fields:notes")</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Details.Any())
+                {
+                    int index = 1;
+                    foreach (var item in Details)
+                    {
+                        <tr>
+                            <td>@index</td>
+                            <td>@GetAccountName(item)</td>
+                            <td>@GetSubAccountName(item)</td>
+                            <td>@item.Debit</td>
+                            <td>@item.Credit</td>
+                            <td>@(item.IsDoc ? "✔" : "✘")</td>
+                            <td>@item.Notes</td>
+                        </tr>
+                        index++;
+                    }
+                }
+                else
+                {
+                    <tr class="text-center" style="height: 300px;">
+                        <td colspan="7" class="align-middle">@jv("form:details:emptyState")</td>
+                    </tr>
+                }
+            </tbody> 
+
+            <tfoot class="totals-footer">
+                <tr>
+                    <td colspan="7">
+                        <div class="d-flex gap-4 justify-content-start">
+                            <div class="d-flex align-items-center me-4">
+                                <label class="me-2">@jv("form:details:totalDebit")</label>
+                                <span class="totals-span">@JV?.TotalDebit.ToString("F2")</span>
+                            </div>
+                            <div class="d-flex align-items-center me-4">
+                                <label class="me-2">@jv("form:details:totalCredit")</label>
+                                <span class="totals-span">@JV?.TotalCredit.ToString("F2")</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <label class="me-2">@jv("form:details:difference")</label>
+                                <span class="totals-span">@(JV is not null ? (JV.TotalDebit - JV.TotalCredit).ToString("F2") : "0.00")</span>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </section>
+</div>
+

@@ -1,0 +1,457 @@
+﻿@page "/SubAccountsView"
+@inherits JVandSubAccount.Shared.LocalizedComponentBase
+
+@inject ISubAccountService SubAccountService
+@inject NavigationManager Navigation
+@inject IJSRuntime JsRuntime
+
+@code {
+    private string subAccounts(string key) => Localizer[$"subAccounts:{key}"];
+    private string Common(string key) => Localizer[$"common:{key}"];
+
+    private List<SubAccount> SubAccounts { get; set; } = new();
+    private SubAccount? SelectedList { get; set; }
+    private SubAccount? SelectedTab { get; set; }
+    private Dictionary<int, bool> ExpandedNodes { get; set; } = new();
+    private HashSet<int> SelectedNodes { get; set; } = new();
+
+    private string activeTab = "Accounts";
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Module = "subAccounts";
+        var culture = CultureInfo.CurrentUICulture.Name;
+
+        await Localizer.LoadStringsAsync(culture, "subAccounts");
+        await Localizer.LoadStringsAsync(culture, "common");
+
+        try
+        {
+            SubAccounts = await SubAccountService.GetSubAccountTreeAsync();
+            foreach (var root in SubAccounts.Where(a => a.ParentID == null))
+            {
+                ExpandedNodes[root.SubAccountID] = false;
+            }
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ToggleNode(SubAccount node)
+    {
+        if (ExpandedNodes.ContainsKey(node.SubAccountID))
+        {
+            ExpandedNodes[node.SubAccountID] = !ExpandedNodes[node.SubAccountID];
+        }
+        else
+        {
+            ExpandedNodes[node.SubAccountID] = true;
+        }
+        StateHasChanged();
+    }
+
+    private void SelectNode(SubAccount node)
+    {
+        SelectedList = node;
+        SelectedTab = node;
+        SelectedNodes.Clear();
+        SelectedNodes.Add(node.SubAccountID);
+        StateHasChanged();
+    }
+
+    private void TextNodeClick(SubAccount node)
+    {
+        if (node.Children?.Any() == true)
+        {
+            ToggleNode(node);
+        }
+        SelectNode(node);
+    }
+
+    private void NavigateToSubAccountsForm(int? id = null)
+    {
+        if (id.HasValue)
+            Navigation.NavigateTo($"/subAccounts/subAccountsForm/{id.Value}");
+        else
+            Navigation.NavigateTo("/subAccounts/subAccountsForm");
+    }
+
+    private string GetTreeIcon(SubAccount node)
+    {
+        if (node.Children?.Any() == true)
+        {
+            return ExpandedNodes.ContainsKey(node.SubAccountID) && ExpandedNodes[node.SubAccountID]
+                ? "bi bi-folder-minus"
+                : "bi bi-folder-plus";
+        }
+        return "bi bi-file-earmark";
+    }
+
+    private string GetNodeClass(SubAccount node)
+    {
+        return SelectedNodes.Contains(node.SubAccountID)
+            ? "tree-node selected-node"
+            : "tree-node";
+    }
+
+    // NEW: Get localized name based on current language
+    private string GetLocalizedName(SubAccount account)
+    {
+        return Localizer.IsRTL ? account.SubAccountNameAr : account.SubAccountNameEn;
+    }
+}
+
+<div id="app" class="journal-voucher-container @(Localizer.IsRTL ? "rtl" : "ltr")">
+    <!-- Header -->
+    <header class="top-nav">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-list white-burger me-2" style="font-size: 1.2rem; color:white"></i>
+                <LanguageSwitcher />
+            </div>
+            <div class="d-flex align-items-center justify-content-between w-50">
+                <span class="text-white">@Common("titles:welcome") User: <span class="yellow-color">name</span></span>
+                <span class="text-white">فرع الأسكندرية <span class="yellow-color">ss</span></span>
+            </div>
+            <div class="d-flex align-items-center justify-content-between">
+                <a class="yellow-color text-decoration-none" href="#">@Common("titles:logout")</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="toolbar-container">
+        <div class="toolbar-segment blue-bg rounded">
+            <a @onclick="() => NavigateToSubAccountsForm(null)" class="toolbar-btn">@Common("buttons:new")</a>
+            <div class="btn-spacer"></div>
+            <a @onclick="() => NavigateToSubAccountsForm(SelectedList?.SubAccountID)"
+               class="toolbar-btn @(SelectedList == null ? "disabled" : "")"
+               aria-disabled="@(SelectedList == null)">
+                @Common("buttons:update")
+            </a>
+            <div class="btn-spacer"></div>
+            <a href="#" class="toolbar-btn @(SelectedList == null ? "disabled" : "")"
+               aria-disabled="@(SelectedList == null)">
+                @Common("buttons:delete")
+            </a>
+            <div class="btn-spacer"></div>
+            <a href="#" class="toolbar-btn">@Common("buttons:addRoot")</a>
+            <div class="btn-spacer"></div>
+            <a href="#" class="toolbar-btn">@Common("buttons:print")</a>
+        </div>
+
+        <div class="toolbar-segment blue-bg rounded flex-grow-1">
+            @subAccounts("pageTitle")
+        </div>
+
+        <div class="toolbar-segment blue-bg rounded yellow-color">
+            X
+        </div>
+    </div>
+
+    <div class="SubAccounts-container">
+        <div class="row g-3  @(Localizer.IsRTL ? "rtl" : "ltr")">
+            <!-- Tree View Column (appears on right in RTL) -->
+            <div class="col-md-6">
+                <div class="card border-0 h-100 w-75" style="background-color: transparent; box-shadow: none;">
+                    <div class="card-body p-0">
+                        @if (isLoading)
+                        {
+                            <div class="text-center p-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">@Common("loading")</span>
+                                </div>
+                            </div>
+                        }
+                        else if (!SubAccounts.Any())
+                        {
+                            <div class="alert alert-info m-3">@subAccounts("noAccounts")</div>
+                        }
+                        else
+                        {
+                            <div class="tree-view">
+                                <ul class="tree-list list-group list-group-flush">
+                                    @foreach (var root in SubAccounts.Where(a => a.ParentID == null))
+                                    {
+                                        <li class="list-group-item p-0" style="background-color: transparent;">
+                                            <div class="@GetNodeClass(root) d-flex align-items-center p-2 flex-nowrap
+                                                        @(Localizer.IsRTL ? "rtl" : "ltr")
+                                                        ">
+                                                <button class="btn btn-sm btn-link p-0 @(Localizer.IsRTL ? "ms-2" : "me-2")"
+                                                        @onclick="() => ToggleNode(root)">
+                                                    <i class="@GetTreeIcon(root)"></i>
+                                                </button>
+                                                <span class="@(Localizer.IsRTL ? "ms-2" : "me-2") text-muted small flex-shrink-0">@root.SubAccountNumber</span>
+                                                <button class="btn btn-link flex-grow-1 p-0 tree-node-text text-truncate"
+                                                        @onclick="() => TextNodeClick(root)">
+                                                    @GetLocalizedName(root) <!-- FIXED: Use localized name -->
+                                                </button>
+                                            </div>
+
+                                            @if (root.Children?.Any() == true &&
+                                           ExpandedNodes.ContainsKey(root.SubAccountID) &&
+                                           ExpandedNodes[root.SubAccountID])
+                                            {
+                                                <ul class="sub-tree list-group list-group-flush">
+                                                    @foreach (var child in root.Children)
+                                                    {
+                                                        <li class="list-group-item p-0" style="background-color: transparent;">
+                                                            <div class="@GetNodeClass(child) d-flex align-items-center p-2 ps-4 flex-nowrap
+                                                                        @(Localizer.IsRTL ? "rtl" : "ltr")">
+                                                                <button class="btn btn-sm btn-link p-0 @(Localizer.IsRTL ? "ms-2" : "me-2")"
+                                                                        @onclick="() => ToggleNode(child)">
+                                                                    <i class="@GetTreeIcon(child)"></i>
+                                                                </button>
+                                                                <span class="@(Localizer.IsRTL ? "ms-2" : "me-2") text-muted small flex-shrink-0">@child.SubAccountNumber</span>
+                                                                <button class="btn btn-link flex-grow-1 p-0 tree-node-text text-truncate"
+                                                                        @onclick="() => TextNodeClick(child)">
+                                                                    @GetLocalizedName(child)
+                                                                </button>
+                                                            </div>
+
+                                                            @if (child.Children?.Any() == true &&
+                                                           ExpandedNodes.ContainsKey(child.SubAccountID) &&
+                                                           ExpandedNodes[child.SubAccountID])
+                                                            {
+                                                                <ul class="sub-tree list-group list-group-flush">
+                                                                    @foreach (var grandChild in child.Children)
+                                                                    {
+                                                                        <li class="list-group-item p-0" style="background-color: transparent;">
+                                                                            <div class="@GetNodeClass(grandChild) d-flex align-items-center p-2 ps-5 flex-nowrap
+                                                                                        @(Localizer.IsRTL ? "rtl" : "ltr")">
+                                                                                <button class="btn btn-sm btn-link p-0 @(Localizer.IsRTL ? "ms-2" : "me-2")"
+                                                                                        @onclick="() => ToggleNode(grandChild)">
+                                                                                    <i class="@GetTreeIcon(grandChild)"></i>
+                                                                                </button>
+                                                                                <span class="@(Localizer.IsRTL ? "ms-2" : "me-2") text-muted small flex-shrink-0">@grandChild.SubAccountNumber</span>
+                                                                                <button class="btn btn-link flex-grow-1 p-0 tree-node-text text-truncate"
+                                                                                        @onclick="() => TextNodeClick(grandChild)">
+                                                                                    @GetLocalizedName(grandChild)
+                                                                                </button>
+                                                                            </div>
+                                                                        </li>
+                                                                    }
+                                                                </ul>
+                                                            }
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            }
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Details Panel Column -->
+            <div class="col-md-6">
+                <!-- SubAccount Form -->
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-body pt-1 pb-1">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <label class="col-sm-6 col-form-label @(Localizer.IsRTL ? "text-end" : "")">@subAccounts("code")</label>
+                                    <div class="col-sm-6">
+                                        <div class="form-control-plaintext p-2 rounded">
+                                            @(SelectedList?.SubAccountNumber ?? "")
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <label class="col-sm-6 col-form-label @(Localizer.IsRTL ? "text-end" : "")">@subAccounts("nameAr")</label>
+                                    <div class="col-sm-6">
+                                        <div class="form-control-plaintext p-2 rounded">
+                                            @(SelectedList?.SubAccountNameAr ?? "")
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <label class="col-sm-6 col-form-label @(Localizer.IsRTL ? "text-end" : "")">@subAccounts("nameEn")</label>
+                                    <div class="col-sm-6">
+                                        <div class="form-control-plaintext p-2 rounded">
+                                            @(SelectedList?.SubAccountNameEn ?? "")
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <label class="col-sm-6 col-form-label @(Localizer.IsRTL ? "text-end" : "")">@subAccounts("type")</label>
+                                    <div class="col-sm-6">
+                                        <div class="form-control-plaintext p-2 rounded">
+                                            @(SelectedList?.SubAccountType?.SubAccountTypeNameAr ?? "")
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <label class="col-sm-6 col-form-label blue-color @(Localizer.IsRTL ? "text-end" : "")">@subAccounts("branch")</label>
+                                    <div class="col-sm-6">
+                                        <div class="form-control-plaintext p-2 rounded">
+                                            @(SelectedList?.Branch?.BranchNameAr ?? "")
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SubAccount Tabs -->
+                <div class="card border-2 Tabs-container shadow-sm">
+                    <div class="card-header bg-primary text-white p-0">
+                        <ul class="nav nav-tabs" id="subAccountTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link tab-link @(activeTab == "Accounts" ? "active" : "")"
+                                        id="accounts-tab"
+                                        @onclick="@(() => activeTab = "Accounts")">
+                                    @subAccounts("tabs:accounts")
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link tab-link @(activeTab == "Details" ? "active" : "")"
+                                        id="details-tab"
+                                        @onclick="@(() => activeTab = "Details")">
+                                    @subAccounts("tabs:details")
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content ">
+                            <!-- Accounts Tab -->
+                            <div class="tab-pane @(activeTab == "Accounts" ? "show active" : "d-none")">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-bordered table-sm text-center">
+                                        <thead class="my-table-header">
+                                            <tr>
+                                                <th>#</th>
+                                                <th >@(Localizer.IsRTL ? @subAccounts("accountNameAr") : @subAccounts("accountNameEn"))</th>                                            
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if (SelectedTab?.SubAccountDetails?.Any() == true)
+                                            {
+                                                int index = 1;
+                                                @foreach (var detail in SelectedTab.SubAccountDetails)
+                                                {
+                                                    <tr>
+                                                        <td>@index</td>
+                                                        <td>@(Localizer.IsRTL ? @detail.Account?.AccountNameAr : @detail.Account?.AccountNameEn)</td>                                                       
+                                                    </tr>
+                                                }
+                                                index++;
+                                            }
+                                            else
+                                            {
+                                                <tr>
+                                                    <td colspan="4" class="text-center text-muted">
+                                                        @subAccounts("noAccountsData")
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <!-- Details Tab -->
+                            <div class="tab-pane @(activeTab == "Details" ? "show active" : "d-none")">
+                                @if (SelectedTab?.Clients?.Any() == true)
+                                {
+                                    @foreach (var client in SelectedTab.Clients)
+                                    {
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <!-- Client Number -->
+                                                <div class="row">
+                                                    <label class="col-sm-6 col-form-label @(Localizer.IsRTL ? "text-end" : "")">@subAccounts("clientNo")</label>
+                                                    <div class="col-sm-6">
+                                                        <div class="client-details-tab p-2 rounded">
+                                                            @client.ClientNo
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Birth Date -->
+                                                <div class="row">
+                                                    <label class="col-sm-6 col-form-label  @(Localizer.IsRTL ? "text-end" : "")">@subAccounts("birthDate")</label>
+                                                    <div class="col-sm-6">
+                                                        <div class="client-details-tab p-2 rounded">
+                                                            @client.BirthDate?.ToString("yyyy-MM-dd")
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- City -->
+                                                <div class="row">
+                                                    <label class="col-sm-6 col-form-label @(Localizer.IsRTL ? "text-end" : "")">@subAccounts("city")</label>
+                                                    <div class="col-sm-6">
+                                                        <div class="client-details-tab p-2 rounded">
+                                                            @client.City?.CityNameAr
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <!-- Credit Limit -->
+                                                <div class="row">
+                                                    <label class="col-sm-6 col-form-label @(Localizer.IsRTL ? "text-end" : "")">@subAccounts("creditLimit")</label>
+                                                    <div class="col-sm-6">
+                                                        <div class="client-details-tab p-2 rounded">
+                                                            @client.CreditLimit?.ToString("N2")
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <label class="col-sm-6 col-form-label @(Localizer.IsRTL ? "text-end" : "")">@subAccounts("IsDiscountTax")</label>
+                                                    <div class="col-sm-6">
+                                                        <div class="client-details-tab p-2 rounded">
+                                                            <i class="@(client.IsDiscountTax ? "bi bi-check-square-fill text-primary" : "bi bi-square text-secondary")"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+
+                                                <!-- Notes -->
+                                                <div class="row">
+                                                    <label class="col-sm-6 col-form-label blue-color @(Localizer.IsRTL ? "text-end" : "")">@subAccounts("notes")</label>
+                                                    <div class="col-sm-6">
+                                                        <div class="client-details-tab p-2 rounded">
+                                                            @client.Notes
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="card border-0 shadow-sm mb-3">
+                                        <div class="card-body pt-1 pb-1">
+                                            <div class="row">
+                                                <div class="col-12 text-center text-muted">
+                                                    @subAccounts("noClientData")
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

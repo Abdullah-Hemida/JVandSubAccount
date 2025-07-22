@@ -1,0 +1,10 @@
+﻿@inherits LayoutComponentBase
+@inject LocalizationService Localizer
+
+<div class="page @(Localizer.IsRTL ? "rtl" : "ltr")">
+    <main>
+        <div class="content">
+            @Body
+        </div>
+    </main>
+</div>

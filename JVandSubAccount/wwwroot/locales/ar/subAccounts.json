@@ -1,0 +1,28 @@
+﻿{
+  "pageTitle": "الحسابات التحليلية",
+  "treeTitle": "شجرة الحسابات الفرعية",
+  "detailsTitle": "تفاصيل الحساب الفرعي",
+  "selectAccountPrompt": "يرجى تحديد حساب فرعي من الشجرة",
+  "noAccounts": "لا توجد حسابات فرعية متاحة",
+  "noAccountsData": "لا توجد حسابات مرتبطة",
+  "noClientData": "لا توجد بيانات عملاء",
+  "code": "الكود",
+  "nameAr": "الاسم العربي",
+  "nameEn": "الاسم الإنجليزي",
+  "branch": "الفرع",
+  "type": "النوع",
+  "level": "المستوى",
+  "tabs": {
+    "accounts": "الحسابات",
+    "details": "تفاصيل العملاء"
+  },
+  "accountNumber": "رقم الحساب",
+  "accountNameAr": "اسم الحساب (عربي)",
+  "accountNameEn": "اسم الحساب (إنجليزي)",
+  "clientNo": "رقم العميل",
+  "birthDate": "تاريخ الميلاد",
+  "city": "المدينة",
+  "creditLimit": "الحد الائتماني",
+  "notes": "ملاحظات",
+  "IsDiscountTax": "خاضع لضريبة الخصم"
+}

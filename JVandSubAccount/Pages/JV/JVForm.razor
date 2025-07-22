@@ -1,0 +1,297 @@
+﻿@page "/jv/JVForm/{JVID:int?}"
+@inherits JVandSubAccount.Shared.LocalizedComponentBase
+@inject IJVService JvServic
+@inject NavigationManager Navigation
+
+@code {
+    [Parameter] public int? JVID { get; set; }
+
+    private JournalVoucher JV = new();
+    private List<JVDetailViewModel> Details = new();
+    private List<JVType> JVTypes = new();
+    private List<Account> Accounts = new();
+    private List<SubAccount> SubAccounts = new();
+
+    private string jv(string key) => Localizer[$"journalVouchers:{key}"];
+    private string Common(string key) => Localizer[$"common:{key}"];
+
+    private string GetAccountName(JVDetailViewModel item) => Localizer.IsRTL ? item.AccountNameAr : item.AccountNameEn;
+    private string GetSubAccountName(JVDetailViewModel item) => Localizer.IsRTL ? item.SubAccountNameAr : item.SubAccountNameEn;
+
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Module = "journalVouchers";
+        var culture = CultureInfo.CurrentUICulture.Name;
+
+        await Localizer.LoadStringsAsync(culture, "journalVouchers");
+        await Localizer.LoadStringsAsync(culture, "common");
+
+        JVTypes = await JvServic.GetJVTypesAsync();
+        Accounts = await JvServic.GetAccountsAsync();
+        SubAccounts = await JvServic.GetSubAccountsAsync();
+
+        if (JVID.HasValue)
+        {
+            JV = await JvServic.GetJVByIdAsync(JVID.Value) ?? new JournalVoucher();
+            Details = await JvServic.GetJVDetailsByJVIDAsync(JVID.Value);
+            UpdateTotals();
+        }
+        else
+        {
+            JV.JVDate = DateTime.Today;
+            JV.BranchID = 1; // Default branch
+            Details.Add(new JVDetailViewModel());
+        }
+    }
+
+    private void AddDetail()
+    {
+        Details.Add(new JVDetailViewModel());
+        OnDetailChanged();
+    }
+
+    private void RemoveDetail(JVDetailViewModel item)
+    {
+        Details.Remove(item);
+        OnDetailChanged();
+    }
+
+    private void UpdateTotals()
+    {
+        JV.TotalDebit = Details.Sum(d => d.Debit);
+        JV.TotalCredit = Details.Sum(d => d.Credit);
+    }
+
+    private void OnDetailChanged()
+    {
+        UpdateTotals();
+        StateHasChanged();
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            // Validate required fields
+            if (!JV.JVTypeID.HasValue || JV.JVTypeID == 0)
+            {
+                errorMessage = "Journal Voucher Type is required.";
+                return;
+            }
+
+            if (!Details.Any() || Details.Any(d => d.AccountID == 0))
+            {
+                errorMessage = "Invalid journal details.";
+                return;
+            }
+
+            // Accounting validation
+            if (Details.Any(d => d.Debit < 0 || d.Credit < 0))
+            {
+                errorMessage = "Debit/Credit values cannot be negative";
+                return;
+            }
+
+            // Map details
+            JV.JVDetails = Details.Select(d => new JVDetail
+            {
+                JVDetailID = d.JVDetailID,
+                AccountID = d.AccountID,
+                SubAccountID = d.SubAccountID,
+                Debit = d.Debit,
+                Credit = d.Credit,
+                IsDoc = d.IsDoc,
+                Notes = d.Notes,
+                BranchID = JV.BranchID
+            }).ToList();
+
+            await JvServic.SaveJVAsync(JV);
+            Navigation.NavigateTo("/jv");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Save failed: {ex.Message}";
+            Console.WriteLine($"Save error: {ex}");
+        }
+    }
+}
+
+<div id="app" class="journal-voucher-container @(Localizer.IsRTL ? "rtl" : "ltr")">
+    <!-- Header -->
+    <header class="top-nav">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-list white-burger me-2" style="font-size: 1.2rem; color:white"></i>
+                <LanguageSwitcher />
+            </div>
+            <div class="d-flex align-items-center justify-content-between w-50">
+                <span class="text-white">@Common("titles:welcome") User: <span class="yellow-color">name</span></span>
+                <span class="text-white">فرع الأسكندرية <span class="yellow-color">ss</span></span>
+            </div>
+            <div class="d-flex align-items-center justify-content-between">
+                <a class="yellow-color text-decoration-none" href="#">@Common("titles:logout")</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="toolbar-container">
+        <div class="toolbar-segment blue-bg rounded">
+            <a @onclick="SaveAsync" class="toolbar-btn">@Common("buttons:save")</a>
+            <div class="btn-spacer"></div>
+            <a class="toolbar-btn">@Common("buttons:SaveAndClose")</a>
+            <div class="btn-spacer"></div>
+            <a href="#" class="toolbar-btn">@Common("buttons:cancel")</a>
+            <div class="btn-spacer"></div>
+            <a href="#" class="toolbar-btn">@Common("buttons:refresh")</a>
+        </div>
+
+        <div class="toolbar-segment blue-bg rounded">
+            <i class="bi bi-chevron-left"></i>
+        </div>
+
+        <div class="toolbar-segment rounded">
+            <input type="search" class="search-input" />
+            <div class="search-icon blue-bg">
+                <i class="bi bi-search"></i>
+            </div>
+        </div>
+
+        <div class="toolbar-segment blue-bg rounded">
+            <i class="bi bi-chevron-right"></i>
+        </div>
+
+        <div class="toolbar-segment blue-bg rounded flex-grow-1">
+            @jv("title")
+        </div>
+
+        <div class="toolbar-segment blue-bg rounded yellow-color">
+            X
+        </div>
+    </div>
+    <!-- Form Section -->
+    <section class="px-4 py-2" style="width: 95%; margin: 0 auto;">
+        <div class="row g-3 align-items-center mb-2">
+            <div class="col-auto">
+                <label class="col-form-label form-label-sm">@jv("form:fields:date")</label>
+            </div>
+            <div class="col-auto">
+                <input type="date" class="form-control" @bind="JV.JVDate" />
+            </div>
+
+            <div class="col-auto">
+                <label class="col-form-label form-label-sm">@jv("form:fields:transType")</label>
+            </div>
+            <div class="col-auto">
+                <select class="form-select" @bind="JV.JVTypeID">
+                    <option value="">-- @Common("labels:all") --</option>
+                    @foreach (var type in JVTypes)
+                    {
+                        <option value="@type.JVTypeID">@(Localizer.IsRTL ? type.NameAr : type.NameEn)</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-auto">
+                <label class="col-form-label form-label-sm">@jv("form:fields:receiptNo")</label>
+            </div>
+            <div class="col-auto">
+                <input class="form-control" @bind="JV.ReceiptNo" />
+            </div>
+        </div>
+
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <label class="col-form-label form-label-sm">@jv("form:fields:notes")</label>
+            </div>
+            <div class="col">
+                <textarea class="form-control" rows="2" @bind="JV.Notes"></textarea>
+            </div>
+        </div>
+    </section>
+
+    <!-- Table Section -->
+    <section class="data-table-container">
+        <table class="table data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>@jv("form:details:account")</th>
+                    <th>@jv("form:details:subAccount")</th>
+                    <th>@jv("form:details:debit")</th>
+                    <th>@jv("form:details:credit")</th>
+                    <th>@jv("form:details:documented")</th>
+                    <th>@jv("form:fields:notes")</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Details)
+                {
+                    <tr>
+                        <td>@(Details.IndexOf(item) + 1)</td>
+                        <td>
+                            <select class="form-select" @bind="item.AccountID">
+                                <option value="">-- @Common("labels:select") --</option>
+                                @foreach (var acc in Accounts)
+                                {
+                                    <option value="@acc.AccountID">@(Localizer.IsRTL ? acc.AccountNameAr : acc.AccountNameEn)</option>
+                                }
+                            </select>
+                        </td>
+                        <td>
+                            <select class="form-select" @bind="item.SubAccountID">
+                                <option value="">-- @Common("labels:select") --</option>
+                                @foreach (var sub in SubAccounts)
+                                {
+                                    <option value="@sub.SubAccountID">@(Localizer.IsRTL ? sub.SubAccountNameAr : sub.SubAccountNameEn)</option>
+                                }
+                            </select>
+                        </td>
+                        <!-- Fixed Debit/Credit Inputs -->
+                        <td>
+                            <input class="form-control" type="number" step="0.01"
+                                   @bind="item.Debit"
+                                   @oninput="@(e => { item.Debit = Convert.ToDecimal(e.Value?.ToString() ?? " 0"); OnDetailChanged(); })" />
+                        </td>
+                        <td>
+                            <input class="form-control" type="number" step="0.01"
+                                   @bind="item.Credit"
+                                   @oninput="@(e => { item.Credit = Convert.ToDecimal(e.Value?.ToString() ?? " 0"); OnDetailChanged(); })" />
+                        </td>
+                        <td><input class="form-check-input" type="checkbox" @bind="item.IsDoc" /></td>
+                        <td><input class="form-control" @bind="item.Notes" /></td>
+                        <td><button class="btn btn-danger btn-sm" @onclick="() => RemoveDetail(item)">X</button></td>
+                    </tr>
+                }                                       
+            </tbody>
+        </table>
+        <button class="btn btn-sm btn-secondary" @onclick="AddDetail">+ Add Row</button>
+        
+        <!-- Totals Footer -->
+        <tfoot class="totals-footer">
+            <tr>
+                <td colspan="7">
+                    <div class="d-flex gap-4 justify-content-start">
+                        <div class="d-flex align-items-center me-4">
+                            <label class="me-2">@jv("form:details:totalDebit")</label>
+                            <span class="totals-span">@JV?.TotalDebit.ToString("F2")</span>
+                        </div>
+                        <div class="d-flex align-items-center me-4">
+                            <label class="me-2">@jv("form:details:totalCredit")</label>
+                            <span class="totals-span">@JV?.TotalCredit.ToString("F2")</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <label class="me-2">@jv("form:details:difference")</label>
+                            <span class="totals-span">@(JV is not null ? (JV.TotalCredit - JV.TotalDebit).ToString("F2") : "0.00")</span>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </tfoot>
+    </section>
+</div>
+
+

@@ -1,0 +1,161 @@
+﻿@* JVList.razor *@
+@page "/jv"
+@inject IJVService JvServic
+@inject NavigationManager Navigation
+@inherits JVandSubAccount.Shared.LocalizedComponentBase
+
+@code {
+    private List<JournalVoucher> AllJVs = new();
+    private List<JournalVoucher> JVs = new();
+    private List<JVType> JVTypes = new();
+    private int? selectedJVTypeId = null;
+
+    private string JV(string key) => Localizer[$"journalVouchers:{key}"];
+    private string Common(string key) => Localizer[$"common:{key}"];
+
+    protected override async Task OnInitializedAsync()
+    {
+        Module = "journalVouchers";
+        var culture = CultureInfo.CurrentUICulture.Name;
+
+        // Load required localization modules
+        await Localizer.LoadStringsAsync(culture, "journalVouchers");
+        await Localizer.LoadStringsAsync(culture, "common");
+
+        JVTypes = await JvServic.GetJVTypesAsync();
+        AllJVs = await JvServic.GetJVsAsync();
+        FilterJVs();
+    }
+
+    private void OnJVTypeChanged(ChangeEventArgs e)
+    {
+        selectedJVTypeId = int.TryParse(e?.Value?.ToString(), out var val) ? val : null;
+        FilterJVs();
+    }
+
+    private void FilterJVs()
+    {
+        JVs = AllJVs
+            .Where(j => !selectedJVTypeId.HasValue || j.JVTypeID == selectedJVTypeId)
+            .ToList();
+    }
+
+    private void NavigateToJVView(int id)
+    {
+        Navigation.NavigateTo($"/jv/JVView/{id}");
+    }
+
+    private void NavigateToJVForm()
+    {
+            Navigation.NavigateTo("/jv/JVForm");
+    }
+}
+
+<div id="app" class="journal-voucher-container @(Localizer.IsRTL ? "rtl" : "ltr")">
+
+    <!-- Header -->
+    <header class="top-nav">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-list white-burger me-2" style="font-size: 1.2rem; color:white"></i>
+                <LanguageSwitcher />
+            </div>
+            <div class="d-flex align-items-center justify-content-between w-50">
+                <span class="text-white">@Common("titles:welcome") User: <span class="yellow-color">name</span></span>
+                <span class="text-white">فرع الأسكندرية <span class="yellow-color">ss</span></span>
+            </div>
+            <div class="d-flex align-items-center justify-content-between">
+                <a class="yellow-color text-decoration-none" href="#">@Common("titles:logout")</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="toolbar-container">
+        <div class="toolbar-segment blue-bg rounded">
+            <a @onclick="() => NavigateToJVForm()" class="toolbar-btn">@Common("buttons:new")</a>
+            <div class="btn-spacer"></div>
+            <a href="#" class="toolbar-btn">@Common("buttons:update")</a>
+            <div class="btn-spacer"></div>
+            <a href="#" class="toolbar-btn">@Common("buttons:delete")</a>
+            <div class="btn-spacer"></div>
+            <a href="#" class="toolbar-btn">@Common("buttons:print")</a>
+        </div>
+
+        <div class="toolbar-segment blue-bg rounded">
+            <i class="bi bi-chevron-left"></i>
+        </div>
+
+        <div class="toolbar-segment rounded">
+            <input type="search" class="search-input" />
+            <div class="search-icon blue-bg">
+                <i class="bi bi-search"></i>
+            </div>
+        </div>
+
+        <div class="toolbar-segment blue-bg rounded">
+            <i class="bi bi-chevron-right"></i>
+        </div>
+
+        <div class="toolbar-segment blue-bg rounded flex-grow-1">
+            @JV("title")
+        </div>
+
+        <div class="toolbar-segment blue-bg rounded yellow-color">
+            X
+        </div>
+    </div>
+
+    <!-- Filter + Table Section -->
+    <section class="data-table-container">
+        <div class="mb-2 d-flex gap-3 align-items-center">
+            <label>@JV("form:fields:transType")</label>
+            <select class="form-select w-25" @onchange="OnJVTypeChanged">
+                <option value="">-- @Common("labels:all") --</option>
+                @foreach (var type in JVTypes)
+                {
+                    <option value="@type.JVTypeID">@(Localizer.IsRTL ? type.NameAr : type.NameEn)</option>
+                }
+            </select>
+        </div>
+
+        <table id="myTable" class="table data-table text-center datatable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>@JV("form:fields:date")</th>
+                    <th>@JV("form:fields:transType")</th>
+                    <th>@JV("form:fields:receiptNo")</th>
+                    <th>@JV("form:details:totalDebit")</th>
+                    <th>@JV("form:details:totalCredit")</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (JVs.Any())
+                {
+                    int index = 1;
+                    foreach (var jv in JVs)
+                    {
+                        <tr @onclick="() => NavigateToJVView(jv.JVID)" style="cursor:pointer">
+                            <td>@index</td>
+                            <td>@jv.JVDate.ToShortDateString()</td>
+                            <td>@(Localizer.IsRTL ? jv.JVType?.NameAr : jv.JVType?.NameEn)</td>
+                            <td>@jv.ReceiptNo</td>
+                            <td>@jv.TotalDebit.ToString("F2")</td>
+                            <td>@jv.TotalCredit.ToString("F2")</td>
+                        </tr>
+                        index++;
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-4">@JV("form:details:emptyState")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+</div>
+
+

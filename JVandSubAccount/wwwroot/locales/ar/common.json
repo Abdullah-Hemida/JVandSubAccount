@@ -1,0 +1,21 @@
+﻿{
+  "buttons": {
+    "new": "جديد",
+    "update": "تعديل",
+    "delete": "حذف",
+    "print": "طباعة",
+    "refresh": "تنشيط",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "select": "اختر",
+    "SaveAndClose": "حفظ و إغلاق",
+    "addRoot": "إضافة عنصر رئيسى"
+  },
+  "titles": {
+    "welcome": "مرحبا",
+    "logout": "تسجيل خروج"
+  },
+  "labels": {
+    "all" : "الكل"
+  }
+}

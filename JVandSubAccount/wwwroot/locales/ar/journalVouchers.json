@@ -1,0 +1,36 @@
+﻿{
+  "title": "قيود اليومية",
+  "newButton": "سند جديد",
+  "columns": {
+    "voucherNo": "رقم القيد",
+    "date": "التاريخ",
+    "type": "نوع القيد",
+    "totalDebit": "إجمالي المدين",
+    "totalCredit": "إجمالي الدائن",
+    "actions": "الإجراءات"
+  },
+  "form": {
+    "titleNew": "سند جديد",
+    "titleEdit": "تعديل السند",
+    "fields": {
+      "voucherNo": "رقم القيد",
+      "date": "التاريخ",
+      "transType": "نوع الحركه",
+      "receiptNo": "رقم الإيصال",
+      "notes": "ملاحظات"
+    },
+    "details": {
+      "title": "تفاصيل القيد",
+      "account": "الحساب",
+      "subAccount": "الحساب التحليلى",
+      "debit": "مدين",
+      "credit": "دائن",
+      "documented": "مستندى",
+      "totals": "الإجمالي",
+      "totalDebit": "إجمالي المدين",
+      "totalCredit": "إجمالي الدائن",
+      "difference": "الفرق",
+      "emptyState": "لا توجد بيانات"
+    }
+  }
+}

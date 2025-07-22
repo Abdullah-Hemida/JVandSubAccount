@@ -1,0 +1,22 @@
+﻿{
+  "buttons": {
+    "new": "New",
+    "update": "Update",
+    "delete": "Delete",
+    "print": "Print",
+    "refresh": "Refresh",
+    "save": "Save",
+    "cancel": "Cancel",
+    "select": "Select",
+    "SaveAndClose": "SaveAndClose",
+    "addRoot": "AddRoot"
+  },
+  "titles": {
+    "welcome": "Welcome",
+    "logout": "Logout"
+  },
+  "labels": {
+    "all": "all"
+  }
+}
+
